@@ -75,7 +75,7 @@ class Serv(BaseHTTPRequestHandler):
             print("Broken pipe error: Client disconnected.")
 
 if __name__ == '__main__':
-    HOST = "193.187.173.242"
+    HOST = "IP"
     PORT = 8000
     httpd = HTTPServer((HOST, PORT), Serv)
     print("Server is running on {}:{}...".format(HOST, PORT))
