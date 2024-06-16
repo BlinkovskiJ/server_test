@@ -25,20 +25,22 @@ class Serv(BaseHTTPRequestHandler):
         return response
 
     def serve_file(self):
-        file_path = self.path[len('/files/'):]  # убираем начальный '/files/'
-        full_path = os.path.join(os.getcwd(), 'files', file_path)  # добавляем путь к файлам
-        print(f"Requested file path: {full_path}")  # вывод пути для отладки
+        file_path = self.path[len('/files/'):]
+        full_path = os.path.join(os.getcwd(), 'files', file_path)
+
         if not os.path.isfile(full_path):
-            print(f"File not found: {full_path}")  # вывод сообщения об ошибке для отладки
             self.send_error(404, 'File Not Found: %s' % self.path)
             return
-        
+
         try:
             file_size = os.path.getsize(full_path)
             mime_type, _ = mimetypes.guess_type(full_path)
+            if mime_type is None:
+                mime_type = 'application/octet-stream'
+
             if "Range" in self.headers:
                 range_header = self.headers['Range']
-                range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
+                range_match = re.match(r'bytes=(\d+)-(\d*)', range_header)
                 if range_match:
                     start = int(range_match.group(1))
                     end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
@@ -51,28 +53,30 @@ class Serv(BaseHTTPRequestHandler):
                     self.send_header("Content-Length", str(end - start + 1))
                     self.send_header("Accept-Ranges", "bytes")
                     self.end_headers()
-                    
+
                     with open(full_path, 'rb') as file:
                         file.seek(start)
                         self.wfile.write(file.read(end - start + 1))
                     return
-            
+
             self.send_response(200)
-            self.send_header('Content-type', mime_type if mime_type else 'application/octet-stream')
+            self.send_header('Content-type', mime_type)
             self.send_header('Content-Length', str(file_size))
+            self.send_header('Content-Disposition', 'inline')
             self.send_header("Accept-Ranges", "bytes")
             self.end_headers()
-            
+
             with open(full_path, 'rb') as file:
                 self.wfile.write(file.read())
+
         except IOError:
-            print(f"IOError when serving file: {full_path}")  # вывод сообщения об ошибке для отладки
             self.send_error(404, 'File Not Found: %s' % self.path)
         except BrokenPipeError:
             print("Broken pipe error: Client disconnected.")
 
-HOST = "193.187.173.242"  # слушаем все интерфейсы
-PORT = 8000
-httpd = HTTPServer((HOST, PORT), Serv)
-print("Server is running on {}:{}...".format(HOST, PORT))
-httpd.serve_forever()
+if __name__ == '__main__':
+    HOST = "193.187.173.242"
+    PORT = 8000
+    httpd = HTTPServer((HOST, PORT), Serv)
+    print("Server is running on {}:{}...".format(HOST, PORT))
+    httpd.serve_forever()
