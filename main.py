@@ -22,7 +22,7 @@ class Serv(BaseHTTPRequestHandler):
 
     def serve_file(self):
         try:
-            file_path = self.path[1:]  # убираем начальный слеш
+            file_path = self.path[1:]
             with open(file_path, 'rb') as file:
                 self.send_response(200)
                 self.send_header('Content-type', 'application/octet-stream')
@@ -32,7 +32,7 @@ class Serv(BaseHTTPRequestHandler):
         except IOError:
             self.send_error(404, 'File Not Found: %s' % self.path)
 
-HOST = "192.168.0.7"
+HOST = "HOST_IP"
 PORT = 8000
 httpd = HTTPServer((HOST, PORT), Serv)
 print("Server is running on {}:{}...".format(HOST, PORT))
